@@ -1,0 +1,618 @@
+/*
+	Title:链表的简单制作与复习
+	TimeLine:2018.9.19
+	Owner:赵衍博 
+	Details:
+		9.19进度 （已解决） 
+		1、“********”为链表基础函数，且已测试好，检测BUG优先级最低
+		2、“ElemType”为可改变选项，主要关于ElemType的定义，出现时即为可更改，不过需要做改动
+		9.20进度 （已解决） 
+		3、 由实训所感（可能也麻烦），独立出控制函数void controller(LinkList &L,int x),利用基本函数表示 
+		4、	添加了对链表存在状态检测(利用int类型全局变量InitFlag)，防止错误弹出	
+		5、 （已解决）链表根据数据搜索需要改进，只考虑单数据，未考虑多个相同数据
+				（可能需要改的地方：case 6;
+									int LocateElem_L(LinkList L,ElemType e);
+									void mainTest(LinkList &L);
+									etc....） 
+									
+		6、	（已解决）链表扩展功能未添加（	1、末位置添加					（已解决） 
+											2、清除链表（基础函数已写）		（已解决） 
+											3、摧毁链表（基础函数已写）		（已解决） 
+																								） 
+		9.21进度
+		7、（已解决）添加学生结构体的应用（听起来就很难，懒病发作）。
+		7.5、 解决了添加中，成绩的检测（字符检测、分数范围检测、失败后字符重新输入），
+			没有给位置错误添加重新输入功能（感觉和现实相差不多） 
+		8、（模模糊糊的解决了吧？）老师说可以尝试双链表甚至多链表连接，emmmmmmmmm，感觉可以学习下。 
+
+*/
+
+//-----------------以下为头文件---------------------------------
+
+ 
+#include <stdio.h>
+#include <cstdlib>
+#include <string.h>
+
+
+//-----------------以下为重定义---------------------------------  
+
+
+//typedef int ElemType; //重定义数据类型（先用int），以供后续类型修改（已经改了） 
+
+typedef int Status;	  //重定义状态，表示函数是否正常运行
+
+typedef struct{
+	char num[10];
+	char name[10];
+	int grade;
+}student;
+
+typedef student ElemType;
+
+
+typedef struct LNode{
+	ElemType data;
+	struct LNode *next;
+}LNode,*LinkList;
+
+
+//-----------------以下为常量定义-------------------------------  
+
+
+#define OK 1
+#define ERROR 0
+#define MAXSIZE 100
+
+
+//-----------------以下为函数定义区-----------------------------
+
+
+Status ClearList(LinkList &L);
+Status InitList_L(LinkList &L);
+Status DestoryList_L(LinkList &L);
+Status GetElem_L(LinkList L,int i,ElemType &tmp);
+Status ListInsertRandom_L(LinkList &L,ElemType e);
+Status ListInsert_L(LinkList &L,int i,ElemType e);
+Status ListDelete_L(LinkList &L,int i,ElemType &e);
+int ListEmpty(LinkList L);
+int ListLength_L(LinkList L);
+int LocateElem_L(LinkList L,ElemType e);
+void ShowAll(LinkList &L);
+void mainTest(LinkList &L,LinkList &L2);
+void controller(LinkList &L,int x);
+LinkList LocateElem_L_EX(LinkList L,ElemType e,int &n);
+void ConnectionList_L(LinkList &L,LinkList &L2);
+void ClearListN(LinkList &L);
+void DestoryList_LN(LinkList &L);
+void CrushList_L(LinkList &L,LinkList &L2,char n);
+//-----------------以下为全局变量区-----------------------------
+
+
+int InitFlag = 0;	//检测链表是否创建
+
+
+//-----------------以下为主函数（启动核心）---------------------
+
+
+int main(){
+	LinkList L;
+	LinkList L2;
+	mainTest(L,L2);
+	return 0;
+}
+
+
+//-----------------以下为表示菜单------------------------------- 
+
+
+void mainTest(LinkList &L,LinkList &L2){//主菜单 
+	//定义选择变量x,n。 
+	int x = 0;
+	char n = 0;
+	//死循环，利用break跳出 
+	while(1){
+	printf("\n          欢迎测试单链表\n\n");
+	printf("---------------------------------\n");
+	//实时检测链表存在状态以及长度（检测BUG快，应该也直观吧。。。） 
+	if(!InitFlag){
+		printf("单链表不存在，请新建单链表！\n");
+	}else if (InitFlag == 1){
+		printf("单链表的长度为： %d\n",ListLength_L(L));
+	}else{
+		printf("单链表1的长度为： %d\n",ListLength_L(L));
+		printf("单链表2的长度为:  %d\n",ListLength_L(L2));
+	} 
+	//选择菜单 
+	printf("---------------------------------\n");
+	printf("请输入数字以进行以下功能\n");
+	printf("1、新建单链表\n");
+	printf("2、插入（后续位置）\n");
+	printf("3、插入（指定位置）\n");
+	printf("4、删除（指定位置）\n");
+	printf("5、查找（指定位置）\n");
+	printf("6、查找（指定数据）\n"); 
+	printf("7、显示所有数据\n");
+	printf("8、清除链表数据（慎重选择）\n");
+	printf("9、摧毁链表（慎重选择）\n");
+	printf("10、两表连接\n");
+	printf("0、退出\n");
+	printf("--------------------------------\n");
+	//开始输入选择 
+	printf("请输入您的选择：");
+	scanf("%d",&x);
+	//根据选择做出反应 
+	if(x == 0){
+		//break退出 
+		printf("--------------------------------\n");
+		printf("测试结束\n");
+		break;
+	}
+	else if(x == 1){
+		//构建单链表 
+		printf("--------------------------------\n");
+		if(!InitFlag){
+			controller(L,1);
+			printf("第一个单链表已建立\n");
+		}else if(InitFlag == 1){
+			controller(L2,1);
+			printf("第二个单链表已建立\n");
+		}
+		
+		printf("--------------------------------\n");
+	}
+	else if(x >=2 && x <=8){
+		//对单链表进行操作，不过要先检测其状态，否则会报错 
+		printf("--------------------------------\n");
+		if(!InitFlag){
+			printf("单链表不存在，请新建单链表！\n");
+		}else if(InitFlag == 1){
+			controller(L,x);
+		}else{
+			fflush(stdin);
+			printf("请选择单链表（Y为第一个表，其他为第二个表）");
+			scanf("%c",&n);
+			fflush(stdin);
+			if(n == 'y' || n == 'Y'){
+				controller(L,x);
+			}else{
+				controller(L2,x);
+			}
+		} 
+		printf("--------------------------------\n");
+		
+	}else if(x == 9){
+		printf("--------------------------------\n");
+		if(!InitFlag){
+			printf("单链表不存在，请新建单链表\n");
+		}else if(InitFlag == 1){
+			controller(L,x);
+		}else{
+			fflush(stdin);
+			printf("请选择单链表（Y为第一个表，其他为第二个表）");
+			scanf("%c",&n);
+			fflush(stdin);
+			if(n == 'y' || n == 'Y'){
+				CrushList_L(L,L2,n);
+				InitFlag--;
+			}else{
+				CrushList_L(L,L2,n);
+				InitFlag--;
+			}
+			printf("已摧毁单链表\n");
+		}
+		printf("--------------------------------\n");			
+	}else if(x == 10){
+		if(InitFlag == 0){
+		printf("单链表不存在，请新建单链表！\n");
+		}
+		else if(InitFlag == 1){
+			printf("单链表不够啊亲，请再建一个吧\n"); 
+		}else if(InitFlag == 2){
+			ConnectionList_L(L,L2);
+		}else{
+			InitFlag = 0;
+			printf("作者又生产了新的BUG，请向他提交并打他一顿\n");
+		}
+	}else{
+		printf("选择错误，请重新输入！\n");
+	}
+	//完成操作后暂停一下，防止输出结果闪过（借用老师源代码方法，getchar()也可以不过相比来说要差一些） 
+	system("pause");
+	//清屏操作 
+	system("cls");
+	}
+	return;
+}
+
+
+//-----------------以下为控制器--------------------------------- 
+
+
+void controller(LinkList &L,int x){
+	switch(x){
+		case 1:{//初始化链表，将失败分为已存在或其他异常（防止找不到BUG） 
+			if(InitList_L(L)){
+				printf("初始化链表成功！\n");
+				InitFlag++;
+			}else{
+				if(InitFlag){
+					printf("初始化链表失败，已存在链表！\n");
+				}else{
+					printf("初始化链表失败，请向作者提交Bug!\n");
+				}
+			}
+			break;
+		}
+		case 2:{//默认插入，和定点插入类似，支持多次连续插入（Y/其他字符） 
+			ElemType x;
+			LinkList p;
+			char flag='y';
+			while(1){
+				p = L;
+				printf("\n");
+				//输数值 
+				printf("请输入你要输入的姓名: ");
+				scanf("%s",x.name);
+				printf("请输入你要输入的学号: ");
+				scanf("%s",x.num);
+				printf("请输入你要输入的成绩: ");
+				while(1){
+				if(scanf("%d",&x.grade) && x.grade >=0 && x.grade <=100){//检测是否为数字，是否在范围内 
+						if(ListInsertRandom_L(p,x)){
+							printf("添加成功！\n\n");
+							break;
+						}else{
+							printf("添加失败，请向作者提交BUG！！\n\n");
+							break;
+						}
+				}else{
+					fflush(stdin);
+					printf("请输入正确数值！\n");
+					printf("请输入你要输入的成绩:");
+				}	
+			}
+				
+				//判断合法与否
+				
+				printf("请问您要继续输入吗？(y/other)  :");
+				//清除数据缓冲区 
+				fflush(stdin);
+				scanf("%c",&flag);
+				fflush(stdin);
+				//画线 
+				if(flag == 'y' ||  flag == 'Y'){
+					printf("---------------------------------\n");
+				}else{
+					break;
+				}
+			}
+			break;
+		}
+		case 3:{//指定位置插入数据，支持多次连续插入（Y/其他字符） 
+			ElemType x;
+			LinkList p;
+			char flag='y';
+			int location;
+			while(1){
+				p = L;
+				printf("\n");
+				//输数值 
+				printf("请输入你要输入的姓名: ");
+				fflush(stdin);
+				scanf("%s",x.name);
+				fflush(stdin);
+				printf("请输入你要输入的学号: ");
+				fflush(stdin);
+				scanf("%s",x.num);
+				printf("请输入你要输入的成绩: ");
+				while(1){
+					//判断合法与否
+					if(scanf("%d",&x.grade) && x.grade >=0 && x.grade <=100){
+						//输位置 
+						printf("请输入插入位置:  ");
+						scanf("%d",&location);
+						printf("\n");
+						if(ListInsert_L(p,location,x)){
+							printf("添加成功！\n\n");
+							break;
+						}else{
+							printf("添加失败，请检查插入数据或数组长度是否合法!\n\n");
+							break;
+						}
+					}else{
+						fflush(stdin);
+						printf("请输入正确数值！\n");
+						printf("请输入你要输入的成绩:");
+					}
+				}	
+				printf("请问您要继续输入吗？(y/other)  :");
+				//清除数据缓冲区 
+				fflush(stdin);
+				scanf("%c",&flag);
+				fflush(stdin);
+				//画线 
+				if(flag == 'y' ||  flag == 'Y'){
+					printf("---------------------------------\n");
+				}else{
+					break;
+				}
+			}
+			break;
+		}
+		case 4:{//指定位置删除数据，很普通 
+			int location;
+			ElemType tmp;
+			printf("请输入你要删除的位置:");
+			scanf("%d",&location);
+			if(ListDelete_L(L,location,tmp)){
+				printf("删除成功！\n");
+			}else{
+				printf("删除失败，请检查插入数据或数组长度是否合法!\n");
+			}
+			break;
+		}
+		case 5:{//指定位置搜索数据，也很普通 
+			int location;
+			ElemType tmp;
+			printf("请输入数的位置：");
+			scanf("%d",&location);
+			if(GetElem_L(L,location,tmp)){
+				printf("搜索成功，结果为: \n姓名: %s,学号: %s,成绩: %d\n",tmp.name,tmp.num,tmp.grade);
+			}else{
+				printf("搜索失败，没有此内容！\n");
+			}
+			return;
+			break;
+		}
+		case 6:{//指定数据搜索位置，实现重复数据全部搜索（修复相关BUG优先级最高，因为做的时候一遍过= =） 
+			LinkList p;
+			ElemType tmp;
+			int sum = 0;
+			int n;
+			printf("请你输入姓名: \n");
+			scanf("%s",tmp.name);
+			p = LocateElem_L_EX(L,tmp,n);
+			if(p){
+				sum += n;
+				printf("搜索成功！数据在第%d个位置",sum);
+				p = p->next;
+				while(p){
+					p = LocateElem_L_EX(p,tmp,n);
+					if(p){
+						sum += n;
+						printf("，第%d个位置",sum);
+					}else{
+						break;
+					}
+					
+				}
+				printf("\n");
+			}else{
+				printf("搜索失败，数据不存在！\n");
+			}
+			break;
+		}
+		case 7:{//显示全部数据，检测链表是否含数据 
+			if(!ListLength_L(L)){
+				printf("链表内无数据，请添加数据！\n"); 
+			}else{
+				ShowAll(L);
+			}
+			break;
+		}
+		case 8:{//清除链表数据，很普通 
+			char flag;
+			printf("请慎重考虑！是否确定清除链表？ (y/other) ：");
+			scanf("%c",&flag);
+			fflush(stdin);
+			if(flag == 'y' || flag == 'Y'){
+				if(ClearList(L)){
+					printf("链表清除成功！\n");
+				}else{//留个修BUG的余地 
+					printf("链表清除失败！请向作者提交BUG！\n");
+				}
+			}
+			break;
+		} 
+		case 9:{//摧毁链表，很普通 
+			char flag;
+			fflush(stdin);
+			printf("请慎重考虑！是否确定摧毁链表？ (y/other) ：");
+			scanf("%c",&flag);
+			fflush(stdin);
+			if(flag == 'y' || flag == 'Y'){
+				if(DestoryList_L(L)){
+					printf("链表摧毁成功！\n");
+					InitFlag--;
+				}else{//留个修BUG的余地 
+					printf("链表摧毁失败！请向作者提交BUG！\n");
+				}
+			}
+			break;
+		}
+	}
+}
+
+
+//-----------------以下为基本函数------------------------------- 
+
+void CrushList_L(LinkList &L,LinkList &L2,char n){
+	if(n == 'Y' || n == 'y'){
+		ClearListN(L);
+		ConnectionList_L(L,L2);
+		DestoryList_LN(L2);
+	}else{
+		DestoryList_LN(L2);
+	}
+}
+
+void ConnectionList_L(LinkList &L,LinkList &L2){//两表连接（检测BUG优先级最高）  
+	LinkList p = L2->next;
+	int i;
+	for(int i = 1; i <= ListLength_L(L2);){
+		i += ListInsertRandom_L(L,p->data);
+	}
+	DestoryList_L(L2);
+	InitFlag--;
+	printf("连接成功，请查看效果\n");
+}
+
+Status InitList_L(LinkList &L){	//初始化链表与头结点，申请空间  ********
+	L=new LNode;
+	L->next=NULL;
+	return OK;
+}
+
+void DestoryList_LN(LinkList &L){//摧毁链表					********
+	LinkList p;
+		while(L)
+		{
+			p=L;
+			L=L->next;
+			delete p;
+		}
+}
+
+Status DestoryList_L(LinkList &L){//摧毁链表					********
+	LinkList p;
+		while(L)
+		{
+			p=L;
+			L=L->next;
+			delete p;
+		}
+	return OK;
+}
+
+void ClearListN(LinkList &L){//清空链表所有数据 				********
+	LinkList p,q;
+	p=L->next;
+	while(p){
+		q=p->next;
+		delete p;
+		p=q;
+	}
+	L->next=NULL;
+	return ;
+}
+
+Status ClearList(LinkList &L){//清空链表所有数据 				********
+	LinkList p,q;
+	p=L->next;
+	while(p){
+		q=p->next;
+		delete p;
+		p=q;
+	}
+	L->next=NULL;
+	return OK;
+}
+
+int ListLength_L(LinkList L){//计算链表长度 					********
+	int i = 0;
+	LinkList p;
+	p=L->next;
+	while(p){
+		i++;
+		p=p->next;
+	}
+	return i;
+}
+
+int ListEmpty(LinkList L){//检测链表是否为空 					********
+	if(L->next)
+		return 0;
+	else
+		return 1;
+}
+
+Status GetElem_L(LinkList L,int i,ElemType &tmp){//取值			********
+	LinkList p = L->next;
+	int j =1;
+	while(p && j <i){
+		p = p->next;
+		j++;
+	}
+	if(!p || i > j){
+		return ERROR;
+	}else{
+		tmp = p->data;
+		return OK;
+	}
+}
+
+LinkList LocateElem_L_EX(LinkList L,ElemType e,int &n){//取值修改版（实现重复数据全部搜索，修复相关BUG优先级最高） 
+	int numbers=1;
+	LinkList p = L->next;
+	while(p && (strcmp(p->data.name,e.name) != 0)){
+		p = p->next;
+		numbers++;
+	}
+	if(p){
+		n = numbers;
+		return p;
+	}else{
+		return NULL;
+	}
+}
+
+Status ListInsertRandom_L(LinkList &L,ElemType e){//随机插入（后面接上） 
+	LinkList p = L;
+	LinkList s = new LNode;
+	while(p->next){
+		p = p->next;
+	}
+	s->data = e;
+	s->next = p->next;
+	p->next = s; 
+	return OK;
+}
+
+Status ListInsert_L(LinkList &L,int i,ElemType e){//定点插入    ******** 
+	LinkList p = L;
+	LinkList s = new LNode;
+	int j = 0;
+	while(p && j < i-1){
+		p=p->next;
+		j++;
+	}
+	if(!p || j > i-1){
+		return ERROR;
+	}
+	s->data = e;
+	s->next = p->next;
+	p->next = s;
+	return OK;
+}
+
+Status ListDelete_L(LinkList &L,int i,ElemType &e){//定点删除	******** 
+	LinkList p = L;
+	LinkList q = new LNode;
+	int j = 0;
+	while(p->next && j<i-1){
+		p = p->next;
+		j++;
+	}
+	if(!(p->next) || j>i-1){
+		return ERROR;
+	}
+	q = p->next;
+	p->next = q->next;
+	e = q->data;
+	delete q;
+	return OK;	
+} 
+
+void ShowAll(LinkList &L){//全部输出 							********
+	LinkList p = L->next;
+	int i = 1;
+	printf("您输出的结果为:\n");
+	while(p){
+		printf("您的第%d个节点为: \n姓名: %s,学号: %s,成绩: %d\n",i,p->data.name,p->data.num,p->data.grade);
+		p = p->next;
+		i++;
+	}
+	return;
+}
+
